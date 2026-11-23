@@ -9,7 +9,7 @@ import {
   staticFile,
 } from "remotion";
 import { Blitz, FilmLook } from "./effekte";
-import { Untertitel } from "./untertitel";
+import { Untertitel, UntertitelAnzeige, Wortzeit, ausWortzeiten, zerlege } from "./untertitel";
 
 // =============================================================
 //  Gemeinsamer Aufbau für jede Folge:
@@ -24,6 +24,8 @@ export type SzenenProps = { dauer: number };
 export type Szene = { id: string; dauer: number; text: string };
 export type Skript = {
   stimme: string | null;
+  /** Sekunden, um die deine Aufnahme verschoben wird (+ = später, − = früher) */
+  stimmeVersatz?: number;
   soundeffekte: boolean;
   musikLautstaerke: number;
   szenen: Szene[];
@@ -62,8 +64,15 @@ export const FolgenVideo: React.FC<{
   skript: Skript;
   szenen: Record<string, React.FC<SzenenProps>>;
   sounds: Record<string, Sfx[]>;
-}> = ({ skript, szenen, sounds }) => {
+  wortzeiten?: Wortzeit[];
+}> = ({ skript, szenen, sounds, wortzeiten }) => {
   const plan = szenenPlan(skript);
+  const versatz = skript.stimmeVersatz ?? 0;
+  // Echte Wortzeiten nur nutzen, wenn eine Stimme eingetragen ist
+  const mitWortzeiten = !!skript.stimme && !!wortzeiten && wortzeiten.length > 0;
+  const globaleHaeppchen = mitWortzeiten
+    ? plan.flatMap((s, i) => ausWortzeiten(s.text, i, wortzeiten!, FPS, versatz) ?? zerlege(s.text, s.frames, s.start))
+    : [];
   return (
     <AbsoluteFill style={{ background: "black" }}>
       {plan.map((s, i) => {
@@ -73,10 +82,12 @@ export const FolgenVideo: React.FC<{
           <Sequence key={s.id + i} from={s.start} durationInFrames={s.frames} name={s.id}>
             <Komponente dauer={s.frames} />
             {i > 0 && <Blitz start={0} dauer={6} staerke={0.55} />}
-            <Untertitel text={s.text} dauerFrames={s.frames} />
+            {!mitWortzeiten && <Untertitel text={s.text} dauerFrames={s.frames} />}
           </Sequence>
         );
       })}
+
+      {mitWortzeiten && <UntertitelAnzeige haeppchen={globaleHaeppchen} ausblendenNach={60} />}
 
       <FilmLook />
 
@@ -95,7 +106,14 @@ export const FolgenVideo: React.FC<{
             )),
           ),
         )}
-      {skript.stimme && <Audio src={staticFile(skript.stimme)} />}
+      {skript.stimme &&
+        (versatz >= 0 ? (
+          <Sequence from={Math.round(versatz * FPS)}>
+            <Audio src={staticFile(skript.stimme)} />
+          </Sequence>
+        ) : (
+          <Audio src={staticFile(skript.stimme)} trimBefore={Math.round(-versatz * FPS)} />
+        ))}
     </AbsoluteFill>
   );
 };

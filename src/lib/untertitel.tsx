@@ -1,28 +1,33 @@
 import React from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 
+// =============================================================
+//  Untertitel im TikTok-Stil
+//  - ohne Aufnahme: Wörter werden gleichmäßig über die Szene verteilt
+//  - mit Wortzeiten (npm run untertitel:folgeX): jedes Wort erscheint
+//    genau dann, wenn du es sagst
+// =============================================================
+
 const MAX_WOERTER = 5;
 
-type Wort = { text: string; betont: boolean; start: number };
+export type Wort = { text: string; betont: boolean; start: number }; // start in Frames
+export type Wortzeit = { szene: number; index: number; wort: string; start: number }; // start in Sekunden
 
-/** Text in Wörter + Zeitpunkte zerlegen. *Wort* = betont (gold). */
-export const zerlege = (text: string, dauerFrames: number): Wort[][] => {
-  const roh = text.split(/\s+/).filter(Boolean);
-  const gewichte = roh.map((w) => 1 + w.replace(/\*/g, "").length * 0.14 + (/[^\d*][.,!?…:]\*?$/.test(w) ? 1.2 : 0));
-  const summe = gewichte.reduce((a, b) => a + b, 0);
-  const nutzbar = dauerFrames * 0.94;
-  let t = 0;
-  const woerter: Wort[] = roh.map((w, i) => {
-    const wort = { text: w.replace(/\*/g, ""), betont: w.includes("*"), start: t };
-    t += (gewichte[i] / summe) * nutzbar;
-    return wort;
-  });
-  // In Häppchen aufteilen (max. 5 Wörter, bevorzugt nach Satzzeichen)
+const satzende = (w: string) => /[^\d][.,!?…:]$/.test(w) || w === "…";
+
+const zuWoertern = (text: string) =>
+  text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => ({ text: w.replace(/\*/g, ""), betont: w.includes("*") }));
+
+/** Wörter in Häppchen (max. 5 Wörter, bevorzugt nach Satzzeichen) aufteilen */
+const haeppchenBilden = (woerter: Wort[]): Wort[][] => {
   const haeppchen: Wort[][] = [];
   let aktuell: Wort[] = [];
   woerter.forEach((w) => {
     aktuell.push(w);
-    if (aktuell.length >= MAX_WOERTER || /[^\d][.,!?…:]$/.test(w.text) || w.text === "…") {
+    if (aktuell.length >= MAX_WOERTER || satzende(w.text)) {
       haeppchen.push(aktuell);
       aktuell = [];
     }
@@ -31,20 +36,56 @@ export const zerlege = (text: string, dauerFrames: number): Wort[][] => {
   return haeppchen;
 };
 
-export const Untertitel: React.FC<{ text: string; dauerFrames: number; oben?: number }> = ({
-  text,
-  dauerFrames,
+/** Gleichmäßig verteilte Zeiten (Frames ab Szenenbeginn) */
+export const zerlege = (text: string, dauerFrames: number, offset = 0): Wort[][] => {
+  const roh = zuWoertern(text);
+  const gewichte = roh.map((w) => 1 + w.text.length * 0.14 + (satzende(w.text) ? 1.2 : 0));
+  const summe = gewichte.reduce((a, b) => a + b, 0);
+  const nutzbar = dauerFrames * 0.94;
+  let t = 0;
+  const woerter = roh.map((w, i) => {
+    const wort = { ...w, start: offset + t };
+    t += (gewichte[i] / summe) * nutzbar;
+    return wort;
+  });
+  return haeppchenBilden(woerter);
+};
+
+/** Häppchen aus echten Wortzeiten (Frames ab Videobeginn) */
+export const ausWortzeiten = (
+  text: string,
+  szene: number,
+  wortzeiten: Wortzeit[],
+  fps: number,
+  versatz: number,
+): Wort[][] | null => {
+  const roh = zuWoertern(text);
+  const zeiten = wortzeiten.filter((w) => w.szene === szene);
+  if (zeiten.length < roh.length) return null;
+  const woerter = roh.map((w, i) => {
+    const z = zeiten.find((x) => x.index === i);
+    return { ...w, start: Math.round(((z?.start ?? 0) + versatz) * fps) };
+  });
+  return haeppchenBilden(woerter);
+};
+
+/** Zeigt das passende Häppchen zum aktuellen Frame an */
+export const UntertitelAnzeige: React.FC<{ haeppchen: Wort[][]; oben?: number; ausblendenNach?: number }> = ({
+  haeppchen,
   oben = 250,
+  ausblendenNach,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const haeppchen = zerlege(text, dauerFrames);
-  const idx = haeppchen.findIndex((h, i) => {
-    const naechster = haeppchen[i + 1];
-    return frame >= h[0].start && (!naechster || frame < naechster[0].start);
+  let idx = -1;
+  haeppchen.forEach((h, i) => {
+    if (frame >= h[0].start) idx = i;
   });
-  const sichtbar = haeppchen[Math.max(0, idx)];
-  if (!sichtbar || frame < sichtbar[0].start) return null;
+  if (idx < 0) return null;
+  const sichtbar = haeppchen[idx];
+  // nach langer Pause (z. B. am Ende) wieder ausblenden
+  const letztes = sichtbar[sichtbar.length - 1].start;
+  if (ausblendenNach !== undefined && idx === haeppchen.length - 1 && frame > letztes + ausblendenNach) return null;
 
   return (
     <div
@@ -91,3 +132,8 @@ export const Untertitel: React.FC<{ text: string; dauerFrames: number; oben?: nu
     </div>
   );
 };
+
+/** Untertitel innerhalb einer Szene (gleichmäßig verteilt) */
+export const Untertitel: React.FC<{ text: string; dauerFrames: number; oben?: number }> = ({ text, dauerFrames, oben }) => (
+  <UntertitelAnzeige haeppchen={zerlege(text, dauerFrames)} oben={oben} />
+);

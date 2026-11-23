@@ -1,6 +1,7 @@
 import React from "react";
 import { FolgenVideo, Sfx, SzenenProps } from "../../lib/folge";
 import { skript } from "./skript";
+import wortzeitenDatei from "./wortzeiten.json";
 import { Hook } from "./szenen/Hook";
 import { Rueckblick } from "./szenen/Rueckblick";
 import { Umschlag } from "./szenen/Umschlag";
@@ -63,5 +64,8 @@ const SOUNDS: Record<string, Sfx[]> = {
   ],
 };
 
-export const Folge1: React.FC = () => <FolgenVideo skript={skript} szenen={SZENEN} sounds={SOUNDS} />;
+// wortzeiten.json wird von "npm run untertitel:folge1" aus deiner Aufnahme erzeugt
+export const Folge1: React.FC = () => (
+  <FolgenVideo skript={skript} szenen={SZENEN} sounds={SOUNDS} wortzeiten={wortzeitenDatei.woerter} />
+);
 export { skript as skriptFolge1 };

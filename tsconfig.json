@@ -7,8 +7,9 @@
     "noEmit": true,
     "lib": ["es2015", "DOM"],
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"]
+  "include": ["src", "scripts"]
 }

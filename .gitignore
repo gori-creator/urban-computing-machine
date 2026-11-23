@@ -4,3 +4,4 @@ out
 # Sprachaufnahmen bleiben lokal
 public/*/stimme*.mp3
 public/*/stimme*.wav
+.whisper

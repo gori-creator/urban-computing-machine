@@ -5,6 +5,10 @@
 //
 //  stimme:      Deine Sprachaufnahme im Ordner "public/folge1/" (z. B. "folge1/stimme.mp3").
 //               null = Video ohne Stimme.
+//               Danach "npm run untertitel:folge1" ausführen – dann passen sich
+//               die Untertitel Wort für Wort an deine Stimme an.
+//  stimmeVersatz: Sekunden, um die die Aufnahme verschoben wird (+ später, − früher).
+//               Nur nötig, wenn deine Stimme nicht genau mit dem Video startet.
 //  soundeffekte: true/false – Kanone, Gong, Herzschlag usw.
 //  musikLautstaerke: Lautstärke der düsteren Hintergrund-Atmosphäre (0 bis 1)
 //
@@ -17,6 +21,7 @@ import type { Skript } from "../../lib/folge";
 
 export const skript: Skript = {
   stimme: null,
+  stimmeVersatz: 0,
   soundeffekte: true,
   musikLautstaerke: 0.35,
   szenen: [
