@@ -2,6 +2,7 @@ import React from "react";
 import { Composition, Folder } from "remotion";
 import { BREITE, FPS, HOEHE, gesamtDauer } from "./lib/folge";
 import { Folge1, skriptFolge1 } from "./folgen/folge1/Folge1";
+import { Test3D, skriptTest3D } from "./folgen/test3d/Test3D";
 
 // Jede neue Folge bekommt hier eine eigene <Composition>.
 export const RemotionRoot: React.FC = () => (
@@ -10,6 +11,14 @@ export const RemotionRoot: React.FC = () => (
       id="Folge1-Verbunden"
       component={Folge1}
       durationInFrames={gesamtDauer(skriptFolge1)}
+      fps={FPS}
+      width={BREITE}
+      height={HOEHE}
+    />
+    <Composition
+      id="Test-3D-Start"
+      component={Test3D}
+      durationInFrames={gesamtDauer(skriptTest3D)}
       fps={FPS}
       width={BREITE}
       height={HOEHE}

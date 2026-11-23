@@ -6,6 +6,7 @@ Gebaut mit [Remotion](https://remotion.dev). Alles ist Code: Figuren, Kamera, Ef
 | Folge | Quell | Thema | Befehl |
 |---|---|---|---|
 | 1 | 100. | Verbunden | `npm run render:folge1` · `npm run untertitel:folge1` |
+| Test | – | 3D-Look: Start am Füllhorn (3D-Welt, 2D-Figuren) | `npm run render:test3d` |
 
 ## Einmalig einrichten (Windows)
 
@@ -68,6 +69,8 @@ src/
 │   ├── verbindung.tsx     ← leuchtende Verbindungslinie
 │   ├── effekte.tsx        ← Kamera, Partikel, Licht, Filmkorn
 │   ├── untertitel.tsx     ← Untertitel im TikTok-Stil
+│   ├── welt3d.tsx         ← 3D-Bausteine: Himmel, Gelände, Füllhorn, Bäume, Kamera
+│   ├── cartoon.tsx        ← farbige 2D-Figuren mit Gesicht & Ausdrücken
 │   └── mathe.ts           ← Hilfsfunktionen (Easing, Wackler, Rauschen)
 scripts/
 └── untertitel.ts          ← Spracherkennung → Wortzeiten

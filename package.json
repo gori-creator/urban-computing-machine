@@ -5,18 +5,23 @@
   "scripts": {
     "dev": "remotion studio",
     "render:folge1": "remotion render Folge1-Verbunden out/folge1.mp4",
-    "untertitel:folge1": "tsx scripts/untertitel.ts folge1"
+    "untertitel:folge1": "tsx scripts/untertitel.ts folge1",
+    "render:test3d": "remotion render Test-3D-Start out/test3d.mp4"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.8.2",
     "@remotion/cli": "4.0.545",
     "@remotion/install-whisper-cpp": "^4.0.545",
+    "@remotion/three": "^4.0.545",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "remotion": "4.0.545",
+    "three": "^0.181.2",
     "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@types/react": "19.3.0",
+    "@types/three": "^0.181.0",
     "typescript": "5.9.3"
   }
 }
