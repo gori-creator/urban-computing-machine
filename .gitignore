@@ -1,0 +1,6 @@
+node_modules
+out
+.DS_Store
+# Sprachaufnahmen bleiben lokal
+public/*/stimme*.mp3
+public/*/stimme*.wav
